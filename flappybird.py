@@ -11,20 +11,39 @@ framecount = 0
 
 class counter:
 
-    def __init__(self, number):
+    digits = [-1, -1, -1]
+
+    def __init__(self, number, x, y):
         self.number = number
+        self.x = x
+        self.y = y
 
     def increment(self):
         self.number += 1
 
+    def makeArray(self, num, index):
+        if (num / 10) < 1:
+            self.digits[index] = num
+            return 1
+        else:
+            current = num / 10
+            self.digits[index] = current
+            return 0
+
+    def recurseArray(self, dig):
+        ind = 0
+        val = self.makeArray(dig, ind)
+        while val == 0:
+            dig = dig % 10
+            ind += 1
+            val = self.makeArray(dig, ind)
+
     def draw(self):
-        if self.number % 10 :
-            #one digit number
-        img = '/Users/nplotkin/PycharmProjects/FlappyBird/{}.png'.format(self.number)
-        screen.blit(get_image(), (self.x1, self.y))
-
-
-
+        self.recurseArray(self.number)
+        for i in self.digits:
+            if self.digits[i] != -1:
+                img = '/Users/nataliekorzh/PycharmProjects/Flappy_Bird/{}.png'.format(self.digits[i])
+                screen.blit(get_image(img), (self.x, self.y))
 
 class base:
     WIDTH = 336
@@ -46,8 +65,8 @@ class base:
             self.x2 = self.x1 + self.WIDTH
 
     def draw(self):
-        screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappyground.png'), (self.x1, self.y))
-        screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappyground.png'), (self.x2, self.y))
+        screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappyground.png'), (self.x1, self.y))
+        screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappyground.png'), (self.x2, self.y))
 
 
 
@@ -67,17 +86,16 @@ class bird:
         return self.y
 
     def draw(self):
-        if not gamestart:
-            print(framecount)
-            if framecount % 30 == 0:
-                self.flapping = not self.flapping
-            if self.flapping:
-                self.y += 0.25
-                screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappybird2.png'), (self.x, self.y))
-            else:
-                self.y -= 0.25
-                screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappybird1.png'), (self.x, self.y))
+        #print(framecount)
+        if framecount % 30 == 0:
+            self.flapping = not self.flapping
 
+        if self.flapping:
+            self.y += 0.25
+            screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird2.png'), (self.x, self.y))
+        else:
+            self.y -= 0.25
+            screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird1.png'), (self.x, self.y))
 
 def get_image(path):
     global _image_library
@@ -103,6 +121,8 @@ done = False
 flappybird = bird(False, (screenwidth / 2 - 20), (screenheight / 3 + 50))
 #Initialize base
 gamebase = base((screenheight - 112))
+#Init counter
+count = counter(0, (screenwidth) / 2 - 12, (screenheight / 16))
 
 time_since_last_action = 0
 
@@ -117,26 +137,33 @@ while not done:
             flappybird.sety((flappybird.gety()))
         if gamestart == False and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             gamestart = True
+        if gamestart == True and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            flappybird.sety(flappybird.gety() - 30)
     framecount += 1
 
     # dt = clock.tick()
     # time_since_last_action += dt
 
-    screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/background1.png'), (0, 0))
-    screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappyground.png'),
+    screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/background1.png'), (0, 0))
+    screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappyground.png'),
                 (0, screenheight - 112))
     gamebase.draw()
     gamebase.move()
 
     if gamestart == False and tutorial == False:
-        screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/buttongroup.png'),
+        #intro
+        screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/buttongroup.png'),
                     (27, screenheight * 2 / 3 - 64))
-        screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/flappytitle.png'), (55, screenheight / 4))
+        screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappytitle.png'), (55, screenheight / 4))
         flappybird.draw()
     elif tutorial == True and gamestart == False:
+        # tutorial
         flappybird.draw()
-        screen.blit(get_image('/Users/nplotkin/PycharmProjects/FlappyBird/instruction.png'), (88, screenheight / 3 + 26))
+        count.draw()
+        screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/instruction.png'), (88, screenheight / 3 + 26))
     else:
+        #game
+        flappybird.sety(flappybird.gety() + 1)
         flappybird.draw()
 
     # Flip the display
