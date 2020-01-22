@@ -11,7 +11,7 @@ framecount = 0
 
 class counter:
 
-    digits = [-1, -1, -1]
+    digits = [-1, -1]
 
     def __init__(self, number, x, y):
         self.number = number
@@ -40,10 +40,25 @@ class counter:
 
     def draw(self):
         self.recurseArray(self.number)
+        c = 0
+        dignum = 0
+
+        if self.number / 10 >= 1:
+            #mult digits
+            c = 1
+
         for i in self.digits:
-            if self.digits[i] != -1:
-                img = '/Users/nataliekorzh/PycharmProjects/Flappy_Bird/{}.png'.format(self.digits[i])
-                screen.blit(get_image(img), (self.x, self.y))
+            if i >= 0:
+                dignum += 1
+                num = int(i)
+                img = '/Users/nataliekorzh/PycharmProjects/Flappy_Bird/{}.png'.format(num)
+                if c == 0:
+                    screen.blit(get_image(img), (self.x, self.y))
+                else:
+                    if dignum == 1:
+                        screen.blit(get_image(img), (self.x - 13, self.y))
+                    else:
+                        screen.blit(get_image(img), (self.x + 10, self.y))
 
 class base:
     WIDTH = 336
@@ -68,13 +83,12 @@ class base:
         screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappyground.png'), (self.x1, self.y))
         screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappyground.png'), (self.x2, self.y))
 
-
-
 class bird:
     def __init__(self, flapping, x, y):
         self.flapping = flapping
         self.x = x
         self.y = y
+        self.vel = 0
 
     def setx(self, x):
         self.x = x
@@ -86,16 +100,48 @@ class bird:
         return self.y
 
     def draw(self):
-        #print(framecount)
-        if framecount % 30 == 0:
-            self.flapping = not self.flapping
+        # when game hasnt started
+        if not gamestart:
+            if framecount % 30 == 0:
+                self.flapping = not self.flapping
+            if self.flapping:
+                self.y += 0.25
+                screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird2.png'), (self.x, self.y))
+            else:
+                self.y -= 0.25
+                screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird1.png'), (self.x, self.y))
 
-        if self.flapping:
-            self.y += 0.25
-            screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird2.png'), (self.x, self.y))
+        # When game starts
         else:
-            self.y -= 0.25
-            screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird1.png'), (self.x, self.y))
+            # if velocity is not zero, reduce velocity every 10 frames
+            if framecount % 10 == 0:
+                if self.vel >= 0:
+                    self.vel -= 1
+                else:
+                    self.vel *= 3
+
+            # when velocity gets to zero or below set flapping to false
+            if self.vel <= 0:
+                self.flapping = False
+
+            # add downwards velocity to y
+            self.y -= self.vel
+
+            # If flapping, blit flapping animation
+            if self.flapping:
+                screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird1.png'), (self.x, self.y))
+            # If not flapping, blit nonflapping animation
+            else:
+                screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/flappybird2.png'), (self.x, self.y))
+
+    # jump method
+    def flap(self):
+        # if not already flapping
+        #if self.flapping == False:
+        # set jumping to true
+        self.flapping = True
+        # add jump to velocity
+        self.vel += 2
 
 def get_image(path):
     global _image_library
@@ -105,8 +151,6 @@ def get_image(path):
         image = pygame.image.load(canonicalized_path)
         _image_library[path] = image
     return image
-
-
 
 #Game starts here
 pygame.init()
@@ -131,14 +175,16 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
-        if gamestart == False and event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-            tutorial = True
-            flappybird.setx((screenwidth / 2 - 20)-75)
-            flappybird.sety((flappybird.gety()))
         if gamestart == False and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            gamestart = True
+            if tutorial == False:
+                tutorial = True
+                flappybird.setx((screenwidth / 2 - 20)-75)
+                flappybird.sety((flappybird.gety()))
+            else:
+                gamestart = True
         if gamestart == True and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            flappybird.sety(flappybird.gety() - 30)
+            flappybird.flap()
+            count.increment()
     framecount += 1
 
     # dt = clock.tick()
@@ -163,7 +209,7 @@ while not done:
         screen.blit(get_image('/Users/nataliekorzh/PycharmProjects/Flappy_Bird/instruction.png'), (88, screenheight / 3 + 26))
     else:
         #game
-        flappybird.sety(flappybird.gety() + 1)
+        count.draw()
         flappybird.draw()
 
     # Flip the display
@@ -171,7 +217,6 @@ while not done:
 
     # tick the clock
     clock.tick(60)
-    print
 
 # Done! Time to quit.
 pygame.quit()
